@@ -1058,7 +1058,20 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       data.f16 = src1_data.f16 + src2_data.f16;
       break;  // assert(0); break;
     case F32_TYPE:
-      data.f32 = src1_data.f32 + src2_data.f32;
+      {
+        unsigned char *src1_char = reinterpret_cast<unsigned char *>(&src1_data.f32);
+        unsigned char *src2_char = reinterpret_cast<unsigned char *>(&src2_data.f32);
+        for (int i = 0; i < 2; i++) { // erase last 16 bits (little endian)
+          printf("[afterdusk] src1_char[%d]: %d src2_char[%d]: %d\n", i, src1_char[i], i, src2_char[i] );
+          src1_char[i] = 0;
+          src2_char[i] = 0;
+        }
+        float *src1 = reinterpret_cast<float *>(src1_char);
+        float *src2 = reinterpret_cast<float *>(src2_char);
+
+        data.f32 = *src1 + *src2;
+      }
+      // data.f32 = src1_data.f32 + src2_data.f32;
       break;
     case F64_TYPE:
     case FF64_TYPE:
