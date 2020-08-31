@@ -3009,7 +3009,10 @@ void cuda_runtime_api::extract_ptx_files_using_cuobjdump(CUctx_st *context) {
     printf("WARNING: Failed to execute cuobjdump to get list of ptx files \n");
     exit(0);
   }
-  if (!gpgpu_ctx->device_runtime->g_cdp_enabled) {
+
+  // if gpgpu_generate_ptx is disabled, do not call cuobjdump to generate ptx
+  // the simulator will attempt to use previously generated ptx instead (which can be overriden)
+  if (!gpgpu_ctx->device_runtime->g_cdp_enabled && gpgpu_ctx->func_sim->gpgpu_generate_ptx) {
     // based on the list above, dump ptx files individually. Format of dumped
     // ptx file is prog_name.unique_no.sm_<>.ptx
 

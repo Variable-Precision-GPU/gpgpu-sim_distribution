@@ -157,6 +157,8 @@ class cuda_sim {
       g_const_name_lookup;  // indexed by hostVar
   int g_ptx_sim_mode;  // if non-zero run functional simulation only (i.e., no
                        // notion of a clock cycle)
+  bool gpgpu_generate_ptx; // whether to generate PTX file with cuobjdump
+                           // and PTX info file with ptxas (only applies to >= CUDA 6)
   unsigned gpgpu_param_num_shaders;
   class std::map<function_info *, rec_pts> g_rpts;
   bool g_cuda_launch_blocking;
