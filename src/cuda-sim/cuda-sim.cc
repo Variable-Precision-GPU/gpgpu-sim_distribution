@@ -575,14 +575,16 @@ void ptx_instruction::set_fp_or_int_archop() {
   } else if ((m_opcode == CVT_OP || m_opcode == SET_OP ||
               m_opcode == SLCT_OP)) {
     if (get_type2() == F16_TYPE || get_type2() == F32_TYPE ||
-        get_type2() == F64_TYPE || get_type2() == FF64_TYPE) {
+        get_type2() == F64_TYPE || get_type2() == FF64_TYPE ||
+        get_type2() == BF16_TYPE) {
       oprnd_type = FP_OP;
     } else
       oprnd_type = INT_OP;
 
   } else {
     if (get_type() == F16_TYPE || get_type() == F32_TYPE ||
-        get_type() == F64_TYPE || get_type() == FF64_TYPE) {
+        get_type() == F64_TYPE || get_type() == FF64_TYPE ||
+        get_type() == BF16_TYPE) {
       oprnd_type = FP_OP;
     } else
       oprnd_type = INT_OP;
@@ -595,7 +597,7 @@ void ptx_instruction::set_mul_div_or_other_archop() {
       (m_opcode != RETP_OP) && (m_opcode != RET_OP) && (m_opcode != CALLP_OP) &&
       (m_opcode != CALL_OP)) {
     if (get_type() == F32_TYPE || get_type() == F64_TYPE ||
-        get_type() == FF64_TYPE) {
+        get_type() == FF64_TYPE || get_type() == BF16_TYPE) {
       switch (get_opcode()) {
         case MUL_OP:
         case MAD_OP:
@@ -807,6 +809,7 @@ void ptx_instruction::set_opcode_and_latency() {
     case SUBC_OP:
       // ADD,SUB latency
       switch (get_type()) {
+        case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[0];
           initiation_interval = fp_init[0];
@@ -832,6 +835,7 @@ void ptx_instruction::set_opcode_and_latency() {
     case MIN_OP:
       // MAX,MIN latency
       switch (get_type()) {
+        case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[1];
           initiation_interval = fp_init[1];
@@ -856,6 +860,7 @@ void ptx_instruction::set_opcode_and_latency() {
     case MUL_OP:
       // MUL latency
       switch (get_type()) {
+        case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[2];
           initiation_interval = fp_init[2];
@@ -882,6 +887,7 @@ void ptx_instruction::set_opcode_and_latency() {
     case MADP_OP:
       // MAD latency
       switch (get_type()) {
+        case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[3];
           initiation_interval = fp_init[3];
@@ -907,6 +913,7 @@ void ptx_instruction::set_opcode_and_latency() {
       // Floating point only
       op = SFU_OP;
       switch (get_type()) {
+        case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[4];
           initiation_interval = fp_init[4];
@@ -973,6 +980,9 @@ static unsigned datatype2size(unsigned data_type) {
     case F16_TYPE:
       data_size = 2;
       break;
+    case BF16_TYPE:
+      printf("datatype2size() for BF16 not yet implemented\n");
+      assert(0);
     case B32_TYPE:
     case S32_TYPE:
     case U32_TYPE:

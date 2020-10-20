@@ -371,6 +371,7 @@ static void print_reg(FILE *fp, std::string name, ptx_reg_t value,
     case F16_TYPE:
       fprintf(fp, ".f16 %f [0x%04x]\n", value.f16, (unsigned)value.u16);
       break;
+    case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
     case F32_TYPE:
       fprintf(fp, ".f32 %.15lf [0x%08x]\n", value.f32, value.u32);
       break;

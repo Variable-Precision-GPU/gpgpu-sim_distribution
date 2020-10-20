@@ -603,6 +603,7 @@ void ptx_recognizer::add_scalar_type_spec(int type_spec) {
     case B32_TYPE:
     case S32_TYPE:
     case U32_TYPE:
+    case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
     case F32_TYPE:
       g_size = 4;
       break;

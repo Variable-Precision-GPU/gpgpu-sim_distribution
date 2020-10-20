@@ -1027,6 +1027,7 @@ unsigned type_info_key::type_decode(int type, size_t &size, int &basic_type) {
       size = 16;
       basic_type = -1;
       return 8;
+    case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
     case F32_TYPE:
       size = 32;
       basic_type = -1;
@@ -1171,7 +1172,7 @@ static std::list<operand_info> check_operands(
       for (o = operands.begin(); o != operands.end(); o++) {
         const operand_info &op = *o;
         if (op.is_literal()) {
-          if ((op.get_type() == double_op_t) && (inst_type == F32_TYPE)) {
+          if ((op.get_type() == double_op_t) && (inst_type == F32_TYPE || inst_type == BF16_TYPE)) { // TODO: Represent BF16 with 16-bit type
             ptx_reg_t v = op.get_literal_value();
             float u = (float)v.f64;
             operand_info n(u, ctx);
