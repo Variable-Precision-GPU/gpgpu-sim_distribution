@@ -867,18 +867,6 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   unsigned rounding_mode = pI->rounding_mode();
-  mpfr_rnd_t mpfr_rounding_mode;
-  switch (rounding_mode) {
-    case RN_OPTION:
-      mpfr_rounding_mode = MPFR_RNDN;
-      break;
-    case RZ_OPTION:
-      mpfr_rounding_mode = MPFR_RNDZ;
-      break;
-    default:
-      assert(0);
-      break;
-  }
 
   switch (i_type) {
     case S16_TYPE:
@@ -901,6 +889,18 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       break;
     case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
       {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
         mpfr_t first;
         mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
@@ -2378,22 +2378,22 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   unsigned rounding_mode = pI->rounding_mode();
-  mpfr_rnd_t mpfr_rounding_mode;
-  switch (rounding_mode) {
-    case RN_OPTION:
-      mpfr_rounding_mode = MPFR_RNDN;
-      break;
-    case RZ_OPTION:
-      mpfr_rounding_mode = MPFR_RNDZ;
-      break;
-    default:
-      assert(0);
-      break;
-  }
 
   switch (i_type) {
     case BF16_TYPE:
       {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
         mpfr_t first;
         mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
@@ -3131,26 +3131,6 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   unsigned rounding_mode = pI->rounding_mode();
   unsigned saturation_mode = pI->saturation_mode();
 
-  mpfr_rnd_t mpfr_rounding_mode;
-  switch (rounding_mode) {
-    case RN_OPTION:
-      mpfr_rounding_mode = MPFR_RNDN;
-      break;
-    case RZ_OPTION:
-      mpfr_rounding_mode = MPFR_RNDZ;
-      break;
-    case RMI_OPTION:
-      mpfr_rounding_mode = MPFR_RNDD;
-      break;
-    case 375:
-      mpfr_rounding_mode = MPFR_RNDD;
-      break;
-    default:
-      printf("[afterdusk] cvt_impl - rounding_mode: %u\n", rounding_mode);
-      assert(0);
-      break;
-  }
-
   //   if ( to_type == F16_TYPE || from_type == F16_TYPE )
   //      abort();
 
@@ -3190,6 +3170,18 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         break;
       case BF16_TYPE:
         {
+          mpfr_rnd_t mpfr_rounding_mode;
+          switch (rounding_mode) {
+            case RN_OPTION:
+              mpfr_rounding_mode = MPFR_RNDN;
+              break;
+            case RZ_OPTION:
+              mpfr_rounding_mode = MPFR_RNDZ;
+              break;
+            default:
+              assert(0);
+              break;
+          }
           mpfr_t first;
           mpfr_inits2(8, first, NULL);
           mpfr_set_flt(first, data.f32, mpfr_rounding_mode);
@@ -3284,18 +3276,6 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   ptx_reg_t src2_data = thread->get_operand_value(src2, dst, i_type, thread, 1);
 
   unsigned rounding_mode = pI->rounding_mode();
-  mpfr_rnd_t mpfr_rounding_mode;
-  switch (rounding_mode) {
-    case RN_OPTION:
-      mpfr_rounding_mode = MPFR_RNDN;
-      break;
-    case RZ_OPTION:
-      mpfr_rounding_mode = MPFR_RNDZ;
-      break;
-    default:
-      assert(0);
-      break;
-  }
 
   switch (i_type) {
     case S8_TYPE:
@@ -3339,6 +3319,18 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       break;  // assert(0); break;
     case BF16_TYPE:
       {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
         mpfr_t first, second;
         mpfr_inits2(8, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
@@ -3377,22 +3369,22 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   src1_data = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   unsigned rounding_mode = pI->rounding_mode();
-  mpfr_rnd_t mpfr_rounding_mode;
-  switch (rounding_mode) {
-    case RN_OPTION:
-      mpfr_rounding_mode = MPFR_RNDN;
-      break;
-    case RZ_OPTION:
-      mpfr_rounding_mode = MPFR_RNDZ;
-      break;
-    default:
-      assert(0);
-      break;
-  }
 
   switch (i_type) {
     case BF16_TYPE:
       {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
         mpfr_t first;
         mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
@@ -4598,7 +4590,6 @@ void mul_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     }
     case BF16_TYPE:
       {
-        unsigned rounding_mode = pI->rounding_mode();
         mpfr_rnd_t mpfr_rounding_mode;
         switch (rounding_mode) {
           case RN_OPTION:
