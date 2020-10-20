@@ -470,7 +470,7 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
         {
           // TODO: Verify the rounding mode
           mpfr_t result;
-          mpfr_inits2(7, result, NULL);
+          mpfr_inits2(8, result, NULL);
           mpfr_set_flt(result, finalResult.f32, MPFR_RNDN);
           mpfr_neg(result, result, MPFR_RNDN);
           finalResult.f32 = mpfr_get_flt(result, MPFR_RNDN);
@@ -901,7 +901,7 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
       {
         mpfr_t first;
-        mpfr_inits2(7, first, NULL);
+        mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
         mpfr_abs(first, first, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
@@ -1111,7 +1111,7 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE:
       {
         mpfr_t first, second;
-        mpfr_inits2(7, first, second, NULL);
+        mpfr_inits2(8, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
         mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
         mpfr_add(first, first, second, mpfr_rounding_mode);
@@ -2394,7 +2394,7 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE:
       {
         mpfr_t first;
-        mpfr_inits2(7, first, NULL);
+        mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
         mpfr_cos(first, first, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
@@ -3190,7 +3190,7 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       case BF16_TYPE:
         {
           mpfr_t first;
-          mpfr_inits2(7, first, NULL);
+          mpfr_inits2(8, first, NULL);
           mpfr_set_flt(first, data.f32, mpfr_rounding_mode);
           mpfr_neg(first, first, mpfr_rounding_mode);
           data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
@@ -3339,7 +3339,7 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE:
       {
         mpfr_t first, second;
-        mpfr_inits2(7, first, second, NULL);
+        mpfr_inits2(8, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
         mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
         mpfr_div(first, first, second, mpfr_rounding_mode);
@@ -3393,7 +3393,7 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE:
       {
         mpfr_t first;
-        mpfr_inits2(7, first, NULL);
+        mpfr_inits2(8, first, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
         mpfr_exp2(first, first, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
@@ -4156,7 +4156,7 @@ void mad_def(const ptx_instruction *pI, ptx_thread_info *thread,
             break;
         }
         mpfr_t first, second, third;
-        mpfr_inits2(7, first, second, third, NULL);
+        mpfr_inits2(8, first, second, third, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
         mpfr_set_flt(second, b.f32, mpfr_rounding_mode);
         mpfr_set_flt(third, c.f32, mpfr_rounding_mode);
@@ -4611,7 +4611,7 @@ void mul_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
-        mpfr_inits2(7, first, second, NULL);
+        mpfr_inits2(8, first, second, NULL);
         mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
         mpfr_set_flt(second, b.f32, mpfr_rounding_mode);
         mpfr_mul(first, first, second, mpfr_rounding_mode);
@@ -6154,7 +6154,7 @@ void sub_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
-        mpfr_inits2(7, first, second, NULL);
+        mpfr_inits2(8, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
         mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
         mpfr_sub(first, first, second, mpfr_rounding_mode);
