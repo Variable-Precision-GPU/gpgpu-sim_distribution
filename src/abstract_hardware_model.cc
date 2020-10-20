@@ -914,6 +914,14 @@ void kernel_info_t::destroy_cta_streams() {
   m_cta_streams.clear();
 }
 
+void kernel_info_t::set_vf_significand(int significand) {
+  vf_significand = significand;
+}
+
+int kernel_info_t::get_vf_significand() {
+  return vf_significand;
+}
+
 simt_stack::simt_stack(unsigned wid, unsigned warpSize, class gpgpu_sim *gpu) {
   m_warp_id = wid;
   m_warp_size = warpSize;

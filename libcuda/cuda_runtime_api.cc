@@ -4094,6 +4094,14 @@ kernel_info_t *cuda_runtime_api::gpgpu_cuda_ptx_sim_init_grid(
                           gridDim, blockDim);
   }
 
+  if (const char* significand = std::getenv("VF_SIGNIFICAND")) {
+    result->set_vf_significand(atoi(significand));
+    printf("[afterdusk] kernel vf_significand: %d\n", result->get_vf_significand());
+  } else {
+    printf("GPGPU-Sim PTX: ERROR launching kernel -- VF_SIGNIFICAND environment variable not set");
+    abort();
+  }
+
   return result;
 }
 

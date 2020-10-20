@@ -466,6 +466,17 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
       case F16_TYPE:
         finalResult.f16 = -finalResult.f16;
         break;
+      case VF32_TYPE:
+        {
+          // TODO: Verify the rounding mode
+          mpfr_t result;
+          mpfr_inits2(thread->get_kernel().get_vf_significand(), result, NULL);
+          mpfr_set_flt(result, finalResult.f32, MPFR_RNDN);
+          mpfr_neg(result, result, MPFR_RNDN);
+          finalResult.f32 = mpfr_get_flt(result, MPFR_RNDN);
+          mpfr_clears(result, NULL);
+          break;
+        }
       case BF16_TYPE:
         {
           // TODO: Verify the rounding mode
@@ -509,6 +520,9 @@ unsigned get_operand_nbits(const operand_info &op) {
       case F16_TYPE:
       case B16_TYPE:
         return 16;
+      case VF32_TYPE:
+        printf("get_operand_nbits() for VF32 not yet implemented\n");
+        assert(0);
       case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
         printf("get_operand_nbits() for BF16 not yet implemented\n");
         assert(0);
@@ -621,7 +635,7 @@ void ptx_thread_info::set_operand_value(const operand_info &dst,
       const symbol *name1 = dst.vec_symbol(0);
       const symbol *name2 = dst.vec_symbol(1);
 
-      if ((type == BF16_TYPE) || (type == F16_TYPE) || (type == F32_TYPE) || (type == F64_TYPE) ||
+      if ((type == VF32_TYPE) || (type == BF16_TYPE) || (type == F16_TYPE) || (type == F32_TYPE) || (type == F64_TYPE) ||
           (type == FF64_TYPE)) {
         setValue2.f32 = (setValue.u64 == 0) ? 1.0f : 0.0f;
       } else {
@@ -674,6 +688,9 @@ void ptx_thread_info::set_operand_value(const operand_info &dst,
         case F16_TYPE:
           if (setValue.f16 == 0) predValue.u64 |= 1;
           break;
+        case VF32_TYPE:
+          printf("set_operand_value() for VF32 not yet implemented\n");
+          assert(0);
         case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
           printf("set_operand_value() for BF16 not yet implemented\n");
           assert(0);
@@ -695,7 +712,7 @@ void ptx_thread_info::set_operand_value(const operand_info &dst,
           (type == B16_TYPE) || (type == B32_TYPE) || (type == B64_TYPE)) {
         if ((setValue.u32 & (1 << (size - 1))) != 0) predValue.u64 |= 1 << 1;
       }
-      if (type == F32_TYPE || type == BF16_TYPE) { // TODO: Represent BF16 with 16-bit type
+      if (type == F32_TYPE || type == BF16_TYPE || type == VF32_TYPE) { // TODO: Represent BF16 with 16-bit type
         if (setValue.f32 < 0) predValue.u64 |= 1 << 1;
       }
 
@@ -887,6 +904,28 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case U64_TYPE:
       d.s64 = my_abs(a.u64);
       break;
+    case VF32_TYPE: // TODO: Represent BF16 with 16-bit type
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
+        mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
+        mpfr_abs(first, first, mpfr_rounding_mode);
+        d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, NULL);
+        break;
+      }
     case BF16_TYPE: // TODO: Represent BF16 with 16-bit type
       {
         mpfr_rnd_t mpfr_rounding_mode;
@@ -1013,6 +1052,8 @@ void addp_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       data.f16 = src1_data.f16 + src2_data.f16;
       break;  // assert(0); break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -1109,6 +1150,17 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       data.f16 = src1_data.f16 + src2_data.f16;
       break;  // assert(0); break;
+    case VF32_TYPE:
+      {
+        mpfr_t first, second;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
+        mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
+        mpfr_add(first, first, second, mpfr_rounding_mode);
+        data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, second, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         mpfr_t first, second;
@@ -1416,6 +1468,8 @@ void atom_callback(const inst_t *inst, ptx_thread_info *thread) {
           op_result.u64 = data.u64 + src2_data.u64;
           data_ready = true;
           break;
+        case VF32_TYPE:
+          inst_not_implemented(pI);
         case BF16_TYPE:
           inst_not_implemented(pI);
         case F32_TYPE:
@@ -1993,7 +2047,7 @@ void mma_impl(const ptx_instruction *pI, core_t *core, warp_inst_t inst) {
       ptx_reg_t nw_v[16];
       int hex_val;
 
-      if (!((operand_num == 3) && (type2 == F32_TYPE || type2 == BF16_TYPE))) { // TODO: Represent BF16 with 16-bit type
+      if (!((operand_num == 3) && (type2 == F32_TYPE || type2 == BF16_TYPE || type == VF32_TYPE))) { // TODO: Represent BF16 with 16-bit type
         for (k = 0; k < 2 * nelem; k++) {
           if (k % 2 == 1)
             hex_val = (v[k / 2].s64 & 0xffff);
@@ -2002,7 +2056,7 @@ void mma_impl(const ptx_instruction *pI, core_t *core, warp_inst_t inst) {
           nw_v[k].f16 = *((half *)&hex_val);
         }
       }
-      if (!((operand_num == 3) && (type2 == F32_TYPE || type2 == BF16_TYPE))) { // TODO: Represent BF16 with 16-bit type
+      if (!((operand_num == 3) && (type2 == F32_TYPE || type2 == BF16_TYPE || type == VF32_TYPE))) { // TODO: Represent BF16 with 16-bit type
         for (k = 0; k < 2 * nelem; k++) {
           temp = nw_v[k].f16;
           if (core->get_gpu()->gpgpu_ctx->debug_tensorcore)
@@ -2380,6 +2434,28 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   unsigned rounding_mode = pI->rounding_mode();
 
   switch (i_type) {
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
+        mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
+        mpfr_cos(first, first, mpfr_rounding_mode);
+        d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         mpfr_rnd_t mpfr_rounding_mode;
@@ -2944,6 +3020,9 @@ void ptx_round(ptx_reg_t &data, int rounding_mode, int type) {
         case F16_TYPE:
           data.f16 = truncf(data.f16);
           break;  // assert(0); break;
+        case VF32_TYPE:
+          printf("ptx_round() for VF32 not yet implemented\n");
+          assert(0);
         case BF16_TYPE:
           printf("ptx_round() for BF16 not yet implemented\n");
           assert(0);
@@ -2982,6 +3061,9 @@ void ptx_round(ptx_reg_t &data, int rounding_mode, int type) {
           data.f16 = cuda_math::__cuda_nearbyintf(data.f16);
 #endif
           break;
+        case VF32_TYPE:
+          printf("ptx_round() for VF32 not yet implemented\n");
+          assert(0);
         case BF16_TYPE:
           printf("ptx_round() for BF16 not yet implemented\n");
           assert(0);
@@ -3017,6 +3099,9 @@ void ptx_round(ptx_reg_t &data, int rounding_mode, int type) {
         case F16_TYPE:
           data.f16 = floorf(data.f16);
           break;  // assert(0); break;
+        case VF32_TYPE:
+          printf("ptx_round() for VF32 not yet implemented\n");
+          assert(0);
         case BF16_TYPE:
           printf("ptx_round() for BF16 not yet implemented\n");
           assert(0);
@@ -3048,6 +3133,9 @@ void ptx_round(ptx_reg_t &data, int rounding_mode, int type) {
         case F16_TYPE:
           data.f16 = ceilf(data.f16);
           break;  // assert(0); break;
+        case VF32_TYPE:
+          printf("ptx_round() for VF32 not yet implemented\n");
+          assert(0);
         case BF16_TYPE:
           printf("ptx_round() for BF16 not yet implemented\n");
           assert(0);
@@ -3067,7 +3155,7 @@ void ptx_round(ptx_reg_t &data, int rounding_mode, int type) {
       break;
   }
 
-  if (type == F32_TYPE || type == BF16_TYPE) { // TODO: Represent BF16 with 16-bit type
+  if (type == F32_TYPE || type == BF16_TYPE || type == VF32_TYPE) { // TODO: Represent BF16 with 16-bit type
 
 #if CUDART_VERSION >= 3000
     if (isnanf(data.f32))
@@ -3105,6 +3193,9 @@ void ptx_saturate(ptx_reg_t &data, int saturation_mode, int type) {
       if (data.f16 > 1.0f) data.f16 = 1.0f;  // negative
       if (data.f16 < 0.0f) data.f16 = 0.0f;  // positive
       break;
+    case VF32_TYPE:
+      printf("ptx_saturate() for VF32 not yet implemented\n");
+      assert(0);
     case BF16_TYPE:
       printf("ptx_saturate() for BF16 not yet implemented\n");
       assert(0);
@@ -3168,6 +3259,28 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       case F16_TYPE:
         data.f16 = -data.f16;
         break;
+      case VF32_TYPE:
+        {
+          mpfr_rnd_t mpfr_rounding_mode;
+          switch (rounding_mode) {
+            case RN_OPTION:
+              mpfr_rounding_mode = MPFR_RNDN;
+              break;
+            case RZ_OPTION:
+              mpfr_rounding_mode = MPFR_RNDZ;
+              break;
+            default:
+              assert(0);
+              break;
+          }
+          mpfr_t first;
+          mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
+          mpfr_set_flt(first, data.f32, mpfr_rounding_mode);
+          mpfr_neg(first, first, mpfr_rounding_mode);
+          data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+          mpfr_clears(first, NULL);
+          break;
+        }
       case BF16_TYPE:
         {
           mpfr_rnd_t mpfr_rounding_mode;
@@ -3317,6 +3430,29 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       data.f16 = src1_data.f16 / src2_data.f16;
       break;  // assert(0); break;
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first, second;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
+        mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
+        mpfr_div(first, first, second, mpfr_rounding_mode);
+        data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, second, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         mpfr_rnd_t mpfr_rounding_mode;
@@ -3371,6 +3507,28 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   unsigned rounding_mode = pI->rounding_mode();
 
   switch (i_type) {
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
+        mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
+        mpfr_exp2(first, first, mpfr_rounding_mode);
+        data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         mpfr_rnd_t mpfr_rounding_mode;
@@ -3646,7 +3804,7 @@ void mma_st_impl(const ptx_instruction *pI, core_t *core, warp_inst_t &inst) {
     }
 
     for (k = 0; k < 8; k++) {
-      if (type == F32_TYPE || type == BF16_TYPE) { // TODO: Represent BF16 with 16-bit type
+      if (type == F32_TYPE || type == BF16_TYPE || type == VF32_TYPE) { // TODO: Represent BF16 with 16-bit type
         // mem->write(new_addr+4*acc_float_offset(k,wmma_layout,stride),size/8,&v[k].s64,thread,pI);
         push_addr = new_addr + 4 * acc_float_offset(k, wmma_layout, stride);
         mem->write(push_addr, size / 8, &v[k].s64, thread, pI);
@@ -3807,7 +3965,7 @@ void mma_ld_impl(const ptx_instruction *pI, core_t *core, warp_inst_t &inst) {
             printf("mma_ld:wrong_type\n");
             abort();
           }
-        } else if (type == F32_TYPE || type == BF16_TYPE) { // TODO: Represent BF16 with 16-bit type
+        } else if (type == F32_TYPE || type == BF16_TYPE || type == VF32_TYPE) { // TODO: Represent BF16 with 16-bit type
           // mem->read(new_addr+4*acc_float_offset(i,wmma_layout,stride),size/8,&data[i].s64);
           fetch_addr = new_addr + 4 * acc_float_offset(i, wmma_layout, stride);
           mem->read(fetch_addr, size / 8, &data[i].s64);
@@ -3863,7 +4021,7 @@ void mma_ld_impl(const ptx_instruction *pI, core_t *core, warp_inst_t &inst) {
       }
     }
 
-    if ((wmma_type == LOAD_C) && (type == F32_TYPE || type == BF16_TYPE)) { // TODO: Represent BF16 with 16-bit type
+    if ((wmma_type == LOAD_C) && (type == F32_TYPE || type == BF16_TYPE || type == VF32_TYPE)) { // TODO: Represent BF16 with 16-bit type
       thread->set_wmma_vector_operand_values(dst, data[0], data[1], data[2],
                                              data[3], data[4], data[5], data[6],
                                              data[7]);
@@ -3936,6 +4094,8 @@ void lg2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   switch (i_type) {
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -4134,7 +4294,40 @@ void mad_def(const ptx_instruction *pI, ptx_thread_info *thread,
       fesetround(orig_rm);
       break;
     }
-    case BF16_TYPE: {
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        assert(use_carry == false);
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first, second, third;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, third, NULL);
+        mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
+        mpfr_set_flt(second, b.f32, mpfr_rounding_mode);
+        mpfr_set_flt(third, c.f32, mpfr_rounding_mode);
+        mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_add(first, first, third, mpfr_rounding_mode);
+        if (pI->saturation_mode()) {
+          if (mpfr_sgn(first) < 0)
+            mpfr_set_flt(first, 0.0f, mpfr_rounding_mode);
+          else if (mpfr_cmp_d(first, 1.0f) > 0)
+            mpfr_set_flt(first, 1.0f, mpfr_rounding_mode);
+        }
+        d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, second, third, NULL);
+        break;
+      }
+    case BF16_TYPE:
+      {
         mpfr_rnd_t mpfr_rounding_mode;
         assert(use_carry == false);
         switch (rounding_mode) {
@@ -4252,6 +4445,8 @@ void max_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case S64_TYPE:
       d.s64 = MY_MAX_I(a.s64, b.s64);
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -4303,6 +4498,8 @@ void min_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case S64_TYPE:
       d.s64 = MY_MIN_I(a.s64, b.s64);
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -4588,6 +4785,38 @@ void mul_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       fesetround(orig_rm);
       break;
     }
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first, second;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_set_flt(first, a.f32, mpfr_rounding_mode);
+        mpfr_set_flt(second, b.f32, mpfr_rounding_mode);
+        mpfr_mul(first, first, second, mpfr_rounding_mode);
+        // printf("[afterdusk] mul_impl: bf16\n");
+
+        if (pI->saturation_mode()) {
+          if (mpfr_sgn(first) < 0)
+            mpfr_set_flt(first, 0.0f, mpfr_rounding_mode);
+          else if (mpfr_cmp_d(first, 1.0f) > 0)
+            mpfr_set_flt(first, 1.0f, mpfr_rounding_mode);
+        }
+
+        d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, second, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         mpfr_rnd_t mpfr_rounding_mode;
@@ -4700,6 +4929,8 @@ void neg_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       data.f16 = 0.0f - src1_data.f16;
       break;  // assert(0); break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -4976,6 +5207,8 @@ void rcp_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   src1_data = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   switch (i_type) {
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5058,6 +5291,8 @@ void rsqrt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   switch (i_type) {
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5127,6 +5362,8 @@ void sad_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case S64_TYPE:
       SAD(d.s64, a.s64, b.s64, c.s64);
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5168,6 +5405,7 @@ void selp_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
 
 bool isFloat(int type) {
   switch (type) {
+    case VF32_TYPE:
     case BF16_TYPE:
     case F16_TYPE:
     case F32_TYPE:
@@ -5403,6 +5641,9 @@ bool CmpOp(int type, ptx_reg_t a, ptx_reg_t b, unsigned cmpop) {
     case F16_TYPE:
       assert(0);
       break;
+    case VF32_TYPE:
+      assert(0);
+      break;
     case BF16_TYPE:
       assert(0);
       break;
@@ -5577,6 +5818,8 @@ void set_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       case U64_TYPE:
         a.u64 = my_abs(a.u64);
         break;
+      case VF32_TYPE:
+        inst_not_implemented(pI);
       case BF16_TYPE:
         inst_not_implemented(pI);
       case F32_TYPE:
@@ -5817,6 +6060,8 @@ void sin_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   switch (i_type) {
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5850,6 +6095,8 @@ void slct_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case S32_TYPE:
       t = c.s32 >= 0;
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5865,6 +6112,8 @@ void slct_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case U16_TYPE:
       d.u16 = t ? a.u16 : b.u16;
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -5896,6 +6145,8 @@ void sqrt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, i_type, thread, 1);
 
   switch (i_type) {
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
@@ -6130,6 +6381,30 @@ void sub_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       data.f16 = src1_data.f16 - src2_data.f16;
       break;  // assert(0); break;
+    case VF32_TYPE:
+      {
+        unsigned rounding_mode = pI->rounding_mode();
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first, second;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_set_flt(first, src1_data.f32, mpfr_rounding_mode);
+        mpfr_set_flt(second, src2_data.f32, mpfr_rounding_mode);
+        mpfr_sub(first, first, second, mpfr_rounding_mode);
+        data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
+        mpfr_clears(first, second, NULL);
+        break;
+      }
     case BF16_TYPE:
       {
         unsigned rounding_mode = pI->rounding_mode();
@@ -6375,6 +6650,8 @@ void tex_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             x = thread->get_gpu()->gpgpu_ctx->func_sim->ptx_tex_regs[0].s32;
             assert(texref->filterMode == cudaFilterModePoint);
             break;
+          case VF32_TYPE:
+            inst_not_implemented(pI);
           case BF16_TYPE:
             inst_not_implemented(pI);
           case F32_TYPE:
@@ -6519,6 +6796,8 @@ void tex_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case F16_TYPE:
       assert(0);
       break;
+    case VF32_TYPE:
+      inst_not_implemented(pI);
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE: {
