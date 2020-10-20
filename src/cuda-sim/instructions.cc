@@ -476,6 +476,7 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
           finalResult.f32 = mpfr_get_flt(result, MPFR_RNDN);
           mpfr_clears(result, NULL);
         }
+        break;
       case F32_TYPE:
         finalResult.f32 = -finalResult.f32;
         break;
