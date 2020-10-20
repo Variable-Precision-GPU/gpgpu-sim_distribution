@@ -475,8 +475,8 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
           mpfr_neg(result, result, MPFR_RNDN);
           finalResult.f32 = mpfr_get_flt(result, MPFR_RNDN);
           mpfr_clears(result, NULL);
+          break;
         }
-        break;
       case F32_TYPE:
         finalResult.f32 = -finalResult.f32;
         break;
@@ -907,8 +907,8 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_abs(first, first, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, NULL);
+        break;
       }
-      break;
     case F32_TYPE:
       d.f32 = my_abs(a.f32);
       break;
@@ -1118,8 +1118,8 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_add(first, first, second, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, second, NULL);
+        break;
       }
-      break;
     case F32_TYPE:
       data.f32 = src1_data.f32 + src2_data.f32;
       break;
@@ -2400,8 +2400,8 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_cos(first, first, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, NULL);
+        break;
       }
-      break;
     case F32_TYPE:
       d.f32 = cos(a.f32);
       break;
@@ -3188,8 +3188,8 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
           mpfr_neg(first, first, mpfr_rounding_mode);
           data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
           mpfr_clears(first, NULL);
+          break;
         }
-        break;
       case F32_TYPE:
         data.f32 = -data.f32;
         break;
@@ -3338,8 +3338,8 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_div(first, first, second, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, second, NULL);
+        break;
       }
-      break;
     case F32_TYPE:
       data.f32 = src1_data.f32 / src2_data.f32;
       break;
@@ -3391,8 +3391,8 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_exp2(first, first, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, NULL);
+        break;
       }
-      break;
     case F32_TYPE:
       data.f32 = cuda_math::__powf(2.0, src1_data.f32);
       break;
@@ -5578,7 +5578,7 @@ void set_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         a.u64 = my_abs(a.u64);
         break;
       case BF16_TYPE:
-      inst_not_implemented(pI);
+        inst_not_implemented(pI);
       case F32_TYPE:
         a.f32 = my_abs(a.f32);
         break;
@@ -6152,6 +6152,7 @@ void sub_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
         mpfr_sub(first, first, second, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, mpfr_rounding_mode);
         mpfr_clears(first, second, NULL);
+        break;
       }
     case F32_TYPE:
       data.f32 = src1_data.f32 - src2_data.f32;
