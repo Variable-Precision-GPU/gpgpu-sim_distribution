@@ -89,6 +89,7 @@ enum uarch_op_t {
   TENSOR_CORE_OP,
   DP_OP,
   SP_OP,
+  VP_OP,
   INTP_OP,
   ALU_SFU_OP,
   LOAD_OP,

@@ -3320,6 +3320,7 @@ void shader_core_config::set_pipeline_latency() {
   unsigned int_latency[6];
   unsigned fp_latency[5];
   unsigned dp_latency[5];
+  unsigned vp_latency[5];
   unsigned sfu_latency;
   unsigned tensor_latency;
 
@@ -3340,6 +3341,9 @@ void shader_core_config::set_pipeline_latency() {
   sscanf(gpgpu_ctx->func_sim->opcode_latency_dp, "%u,%u,%u,%u,%u",
          &dp_latency[0], &dp_latency[1], &dp_latency[2], &dp_latency[3],
          &dp_latency[4]);
+  sscanf(gpgpu_ctx->func_sim->opcode_latency_vp, "%u,%u,%u,%u,%u",
+         &vp_latency[0], &vp_latency[1], &vp_latency[2], &vp_latency[3],
+         &vp_latency[4]);
   sscanf(gpgpu_ctx->func_sim->opcode_latency_sfu, "%u", &sfu_latency);
   sscanf(gpgpu_ctx->func_sim->opcode_latency_tensor, "%u", &tensor_latency);
 

@@ -138,11 +138,13 @@ class cuda_sim {
   char *opcode_latency_int;
   char *opcode_latency_fp;
   char *opcode_latency_dp;
+  char *opcode_latency_vp;
   char *opcode_latency_sfu;
   char *opcode_latency_tensor;
   char *opcode_initiation_int;
   char *opcode_initiation_fp;
   char *opcode_initiation_dp;
+  char *opcode_initiation_vp;
   char *opcode_initiation_sfu;
   char *opcode_initiation_tensor;
   int cp_count;

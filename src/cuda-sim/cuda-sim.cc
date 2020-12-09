@@ -74,6 +74,12 @@ void cuda_sim::ptx_opcocde_latency_options(option_parser_t opp) {
                          "points <ADD,MAX,MUL,MAD,DIV>"
                          "Default 8,8,8,8,335",
                          "8,8,8,8,335");
+  option_parser_register(opp, "-ptx_opcode_latency_vp", OPT_CSTR,
+                         &opcode_latency_vp,
+                         "Opcode latencies for variable precision floating "
+                         "points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 1,1,1,1,30",
+                         "1,1,1,1,30");
   option_parser_register(opp, "-ptx_opcode_latency_sfu", OPT_CSTR,
                          &opcode_latency_sfu,
                          "Opcode latencies for SFU instructions"
@@ -101,6 +107,12 @@ void cuda_sim::ptx_opcocde_latency_options(option_parser_t opp) {
                          "floating points <ADD,MAX,MUL,MAD,DIV>"
                          "Default 8,8,8,8,130",
                          "8,8,8,8,130");
+  option_parser_register(opp, "-ptx_opcode_initiation_vp", OPT_CSTR,
+                         &opcode_initiation_vp,
+                         "Opcode initiation intervals for variable precision "
+                         "floating points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 1,1,1,1,5",
+                         "1,1,1,1,5");
   option_parser_register(opp, "-ptx_opcode_initiation_sfu", OPT_CSTR,
                          &opcode_initiation_sfu,
                          "Opcode initiation intervals for sfu instructions"
@@ -687,11 +699,13 @@ void ptx_instruction::set_opcode_and_latency() {
   unsigned int_latency[6];
   unsigned fp_latency[5];
   unsigned dp_latency[5];
+  unsigned vp_latency[5];
   unsigned sfu_latency;
   unsigned tensor_latency;
   unsigned int_init[6];
   unsigned fp_init[5];
   unsigned dp_init[5];
+  unsigned vp_init[5];
   unsigned sfu_init;
   unsigned tensor_init;
   /*
@@ -711,6 +725,9 @@ void ptx_instruction::set_opcode_and_latency() {
   sscanf(gpgpu_ctx->func_sim->opcode_latency_dp, "%u,%u,%u,%u,%u",
          &dp_latency[0], &dp_latency[1], &dp_latency[2], &dp_latency[3],
          &dp_latency[4]);
+  sscanf(gpgpu_ctx->func_sim->opcode_latency_vp, "%u,%u,%u,%u,%u",
+         &vp_latency[0], &vp_latency[1], &vp_latency[2], &vp_latency[3],
+         &vp_latency[4]);
   sscanf(gpgpu_ctx->func_sim->opcode_latency_sfu, "%u", &sfu_latency);
   sscanf(gpgpu_ctx->func_sim->opcode_latency_tensor, "%u", &tensor_latency);
   sscanf(gpgpu_ctx->func_sim->opcode_initiation_int, "%u,%u,%u,%u,%u,%u",
@@ -720,6 +737,8 @@ void ptx_instruction::set_opcode_and_latency() {
          &fp_init[0], &fp_init[1], &fp_init[2], &fp_init[3], &fp_init[4]);
   sscanf(gpgpu_ctx->func_sim->opcode_initiation_dp, "%u,%u,%u,%u,%u",
          &dp_init[0], &dp_init[1], &dp_init[2], &dp_init[3], &dp_init[4]);
+  sscanf(gpgpu_ctx->func_sim->opcode_initiation_vp, "%u,%u,%u,%u,%u",
+         &vp_init[0], &vp_init[1], &vp_init[2], &vp_init[3], &vp_init[4]);
   sscanf(gpgpu_ctx->func_sim->opcode_initiation_sfu, "%u", &sfu_init);
   sscanf(gpgpu_ctx->func_sim->opcode_initiation_tensor, "%u", &tensor_init);
   sscanf(gpgpu_ctx->func_sim->cdp_latency_str, "%u,%u,%u,%u,%u",
@@ -810,6 +829,10 @@ void ptx_instruction::set_opcode_and_latency() {
       // ADD,SUB latency
       switch (get_type()) {
         case VF32_TYPE:
+          latency = vp_latency[0];
+          initiation_interval = vp_init[0];
+          op = VP_OP;
+          break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[0];
@@ -837,6 +860,10 @@ void ptx_instruction::set_opcode_and_latency() {
       // MAX,MIN latency
       switch (get_type()) {
         case VF32_TYPE:
+          latency = vp_latency[1];
+          initiation_interval = vp_init[1];
+          op = VP_OP;
+          break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[1];
@@ -863,6 +890,10 @@ void ptx_instruction::set_opcode_and_latency() {
       // MUL latency
       switch (get_type()) {
         case VF32_TYPE:
+          latency = vp_latency[2];
+          initiation_interval = vp_init[2];
+          op = VP_OP;
+          break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[2];
@@ -891,6 +922,10 @@ void ptx_instruction::set_opcode_and_latency() {
       // MAD latency
       switch (get_type()) {
         case VF32_TYPE:
+          latency = vp_latency[3];
+          initiation_interval = vp_init[3];
+          op = VP_OP;
+          break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[3];
@@ -918,6 +953,9 @@ void ptx_instruction::set_opcode_and_latency() {
       op = SFU_OP;
       switch (get_type()) {
         case VF32_TYPE:
+          latency = vp_latency[4];
+          initiation_interval = vp_init[4];
+          break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
           latency = fp_latency[4];
