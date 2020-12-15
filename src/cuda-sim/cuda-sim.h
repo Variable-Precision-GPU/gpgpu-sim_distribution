@@ -157,6 +157,7 @@ class cuda_sim {
       g_global_name_lookup;  // indexed by hostVar
   std::map<const void *, std::string>
       g_const_name_lookup;  // indexed by hostVar
+  char *g_config_path;  // relative path to config file (default ./gpgpusim.config)
   int g_ptx_sim_mode;  // if non-zero run functional simulation only (i.e., no
                        // notion of a clock cycle)
   bool gpgpu_generate_ptx; // whether to generate PTX file with cuobjdump

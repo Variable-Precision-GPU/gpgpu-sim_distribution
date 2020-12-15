@@ -209,7 +209,14 @@ gpgpu_sim *gpgpu_context::gpgpu_ptx_sim_init_perf() {
   the_gpgpusim->g_the_gpu_config->reg_options(
       opp);  // register GPU microrachitecture options
 
-  option_parser_cmdline(opp, sg_argc, sg_argv);  // parse configuration options
+  // parse configuration options
+  // if config path env is set, override default path
+  if (func_sim->g_config_path != NULL) {
+    const char *g_argv[] = {"", "-config", func_sim->g_config_path};
+    option_parser_cmdline(opp, sg_argc, g_argv);
+  } else {
+    option_parser_cmdline(opp, sg_argc, sg_argv);
+  }
   fprintf(stdout, "GPGPU-Sim: Configuration options:\n\n");
   option_parser_print(opp, stdout);
   // Set the Numeric locale to a standard locale where a decimal point is a

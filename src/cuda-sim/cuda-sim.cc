@@ -2329,6 +2329,17 @@ void cuda_sim::read_sim_environment_variables() {
   g_debug_execution = 0;
   g_interactive_debugger_enabled = false;
 
+  g_config_path = getenv("SIM_CONFIG_PATH");
+  if (g_config_path) {
+    printf(
+        "GPGPU-Sim PTX: config path %s (modify with SIM_CONFIG_PATH "
+        "environment variable)\n",
+        g_config_path);
+  } else {
+    printf(
+        "GPGPU-Sim PTX: default config path (modify with SIM_CONFIG_PATH "
+        "environment variable)\n");
+  }
   char *mode = getenv("PTX_SIM_MODE_FUNC");
   if (mode) sscanf(mode, "%u", &g_ptx_sim_mode);
   printf(
