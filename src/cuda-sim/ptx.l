@@ -93,6 +93,7 @@ dp4a	TC; yylval->int_value = DP4A_OP; return OPCODE;
 ex2	TC; yylval->int_value = EX2_OP; return OPCODE;
 exit	TC; yylval->int_value = EXIT_OP; return OPCODE;
 fma     TC; yylval->int_value = FMA_OP; return OPCODE;
+fmam    TC; yylval->int_value = FMAM_OP; return OPCODE;
 isspacep TC; yylval->int_value = ISSPACEP_OP; return OPCODE;
 ld      TC; yylval->int_value = LD_OP; return OPCODE;
 ld.volatile TC; yylval->int_value = LD_OP; return OPCODE;

@@ -4412,6 +4412,63 @@ void mad_def(const ptx_instruction *pI, ptx_thread_info *thread,
   thread->set_operand_value(dst, d, i_type, thread, pI, overflow, carry);
 }
 
+void fmam_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
+  const operand_info &dst = pI->dst();
+  const operand_info &src1 = pI->src1();
+  const operand_info &src2 = pI->src2();
+  const operand_info &src3 = pI->src3();
+  ptx_reg_t d, t;
+
+  int carry = 0;
+  int overflow = 0;
+
+  unsigned i_type = pI->get_type();
+  ptx_reg_t a = thread->get_operand_value(src1, dst, i_type, thread, 1);
+  ptx_reg_t b = thread->get_operand_value(src2, dst, i_type, thread, 1);
+  ptx_reg_t c = thread->get_operand_value(src3, dst, i_type, thread, 1);
+
+  unsigned rounding_mode = pI->rounding_mode();
+
+  switch (i_type) {
+    case VF32_TYPE:
+      {
+        mpfr_rnd_t mpfr_rounding_mode;
+        switch (rounding_mode) {
+          case RN_OPTION:
+            mpfr_rounding_mode = MPFR_RNDN;
+            break;
+          case RZ_OPTION:
+            mpfr_rounding_mode = MPFR_RNDZ;
+            break;
+          default:
+            assert(0);
+            break;
+        }
+        mpfr_t first, second, third;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_inits2(24, third, NULL);
+        mpfr_set_flt(first, a.f32, MPFR_RNDD);
+        mpfr_set_flt(second, b.f32, MPFR_RNDD);
+        mpfr_set_flt(third, c.f32, MPFR_RNDD);
+        mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_add(third, first, third, mpfr_rounding_mode);
+        if (pI->saturation_mode()) {
+          if (mpfr_sgn(third) < 0)
+            mpfr_set_flt(third, 0.0f, MPFR_RNDD);
+          else if (mpfr_cmp_d(third, 1.0f) > 0)
+            mpfr_set_flt(third, 1.0f, MPFR_RNDD);
+        }
+        d.f32 = mpfr_get_flt(third, MPFR_RNDD);
+        mpfr_clears(first, second, third, NULL);
+        break;
+      }
+    default:
+      assert(0);
+      break;
+  }
+  thread->set_operand_value(dst, d, i_type, thread, pI, overflow, carry);
+}
+
 bool isNaN(float x) { return std::isnan(x); }
 
 bool isNaN(double x) { return std::isnan(x); }
