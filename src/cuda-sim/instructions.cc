@@ -5474,7 +5474,7 @@ bool isFloat(int type) {
   }
 }
 
-bool CmpOp(int type, ptx_reg_t a, ptx_reg_t b, unsigned cmpop) {
+bool CmpOp(int type, ptx_reg_t a, ptx_reg_t b, unsigned cmpop, ptx_thread_info *thread) {
   bool t = false;
 
   switch (type) {
@@ -5699,8 +5699,61 @@ bool CmpOp(int type, ptx_reg_t a, ptx_reg_t b, unsigned cmpop) {
       assert(0);
       break;
     case VF32_TYPE:
-      assert(0);
-      break;
+      {
+        mpfr_t first, second;
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+        mpfr_set_flt(first, a.f32, MPFR_RNDD);
+        mpfr_set_flt(second, b.f32, MPFR_RNDD);
+
+        switch (cmpop) {
+          case EQ_OPTION:
+            t = mpfr_equal_p(first, second);
+            break;
+          case NE_OPTION:
+            t = !mpfr_equal_p(first, second) && !mpfr_nan_p(first) && !mpfr_nan_p(second);
+            break;
+          case LT_OPTION:
+            t = mpfr_less_p(first, second);
+            break;
+          case LE_OPTION:
+            t = mpfr_lessequal_p(first, second);
+            break;
+          case GT_OPTION:
+            t = mpfr_greater_p(first, second);
+            break;
+          case GE_OPTION:
+            t = mpfr_greaterequal_p(first, second);
+            break;
+          case EQU_OPTION:
+            t = mpfr_equal_p(first, second) || mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          case NEU_OPTION:
+            t = !mpfr_equal_p(first, second);
+            break;
+          case LTU_OPTION:
+            t = mpfr_less_p(first, second) || mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          case LEU_OPTION:
+            t = mpfr_lessequal_p(first, second) || mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          case GTU_OPTION:
+            t = mpfr_greater_p(first, second) || mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          case GEU_OPTION:
+            t = mpfr_greaterequal_p(first, second) || mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          case NUM_OPTION:
+            t = !mpfr_nan_p(first) && !mpfr_nan_p(second);
+            break;
+          case NAN_OPTION:
+            t = mpfr_nan_p(first) || mpfr_nan_p(second);
+            break;
+          default:
+            assert(0);
+        }
+        mpfr_clears(first, second, NULL);
+        break;
+      }
     case BF16_TYPE:
       assert(0);
       break;
@@ -5825,7 +5878,7 @@ void setp_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   a = thread->get_operand_value(src1, dst, type, thread, 1);
   b = thread->get_operand_value(src2, dst, type, thread, 1);
 
-  t = CmpOp(type, a, b, cmpop);
+  t = CmpOp(type, a, b, cmpop, thread);
 
   ptx_reg_t data;
 
@@ -5893,7 +5946,7 @@ void set_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     }
   }
 
-  t = CmpOp(src_type, a, b, cmpop);
+  t = CmpOp(src_type, a, b, cmpop, thread);
 
   ptx_reg_t data;
   if (isFloat(pI->get_type())) {
