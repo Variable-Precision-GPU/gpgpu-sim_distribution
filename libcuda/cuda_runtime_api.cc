@@ -147,6 +147,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include <mpfr.h>
+
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
@@ -4094,13 +4096,25 @@ kernel_info_t *cuda_runtime_api::gpgpu_cuda_ptx_sim_init_grid(
                           gridDim, blockDim);
   }
 
-  if (const char* significand = std::getenv("VF_SIGNIFICAND")) {
-    result->set_vf_significand(atoi(significand));
-    printf("[afterdusk] kernel vf_significand: %d\n", result->get_vf_significand());
-  } else {
-    printf("GPGPU-Sim PTX: ERROR launching kernel -- VF_SIGNIFICAND environment variable not set");
-    abort();
-  }
+  // Set significand width
+  // Default: 24 bits (equivalent to FP32, inclusive of implicit bit)
+  const char* significand = std::getenv("VF_SIGNIFICAND");
+  significand = significand ? significand : "24";
+  result->set_vf_significand(atoi(significand));
+  printf("[afterdusk] kernel vf_significand: %d\n", result->get_vf_significand());
+
+
+  // Set min and max exponent
+  // Default min: -148 (equivalent to FP32, including subnormal range)
+  // Default max: 128 (equivalent to FP32)
+  const char* exponent_min = std::getenv("VF_EXPONENT_MIN");
+  exponent_min = exponent_min ? exponent_min : "-148";
+  const char* exponent_max = std::getenv("VF_EXPONENT_MAX");
+  exponent_max = exponent_max ? exponent_max : "128";
+  result->set_vf_exponent_min(atoi(exponent_min));
+  result->set_vf_exponent_max(atoi(exponent_max));
+  printf("[afterdusk] kernel vf_exponent_min: %d, vf_exponent_max: %d\n",
+          result->get_vf_exponent_min(), result->get_vf_exponent_max());
 
   return result;
 }

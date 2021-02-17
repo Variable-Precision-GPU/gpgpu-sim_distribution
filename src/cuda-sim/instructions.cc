@@ -470,9 +470,12 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
         {
           // TODO: Verify the rounding mode
           mpfr_t result;
+          mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+          mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
           mpfr_inits2(thread->get_kernel().get_vf_significand(), result, NULL);
           mpfr_set_flt(result, finalResult.f32, MPFR_RNDD);
-          mpfr_neg(result, result, MPFR_RNDD);
+          int i = mpfr_neg(result, result, MPFR_RNDD);
+          mpfr_subnormalize(result, i, MPFR_RNDD);
           finalResult.f32 = mpfr_get_flt(result, MPFR_RNDD);
           mpfr_clears(result, NULL);
           break;
@@ -481,9 +484,12 @@ ptx_reg_t ptx_thread_info::get_operand_value(const operand_info &op,
         {
           // TODO: Verify the rounding mode
           mpfr_t result;
+          mpfr_set_emin(-132);
+          mpfr_set_emax(128);
           mpfr_inits2(9, result, NULL);
           mpfr_set_flt(result, finalResult.f32, MPFR_RNDD);
-          mpfr_neg(result, result, MPFR_RNDD);
+          int i = mpfr_neg(result, result, MPFR_RNDD);
+          mpfr_subnormalize(result, i, MPFR_RNDD);
           finalResult.f32 = mpfr_get_flt(result, MPFR_RNDD);
           mpfr_clears(result, NULL);
           break;
@@ -919,9 +925,12 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
-        mpfr_abs(first, first, mpfr_rounding_mode);
+        int i = mpfr_abs(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -941,9 +950,12 @@ void abs_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
-        mpfr_abs(first, first, mpfr_rounding_mode);
+        int i = mpfr_abs(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -1153,10 +1165,13 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case VF32_TYPE:
       {
         mpfr_t first, second;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_add(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_add(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;
@@ -1164,10 +1179,13 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     case BF16_TYPE:
       {
         mpfr_t first, second;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_add(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_add(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;
@@ -2449,9 +2467,12 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
-        mpfr_cos(first, first, mpfr_rounding_mode);
+        int i = mpfr_cos(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -2471,9 +2492,12 @@ void cos_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
-        mpfr_cos(first, first, mpfr_rounding_mode);
+        int i = mpfr_cos(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         d.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -3274,9 +3298,12 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
               break;
           }
           mpfr_t first;
+          mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+          mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
           mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
           mpfr_set_flt(first, data.f32, MPFR_RNDD);
-          mpfr_neg(first, first, mpfr_rounding_mode);
+          int i = mpfr_neg(first, first, mpfr_rounding_mode);
+          mpfr_subnormalize(first, i, mpfr_rounding_mode);
           data.f32 = mpfr_get_flt(first, MPFR_RNDD);
           mpfr_clears(first, NULL);
           break;
@@ -3296,9 +3323,12 @@ void cvt_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
               break;
           }
           mpfr_t first;
+          mpfr_set_emin(-132);
+          mpfr_set_emax(128);
           mpfr_inits2(9, first, NULL);
           mpfr_set_flt(first, data.f32, MPFR_RNDD);
-          mpfr_neg(first, first, mpfr_rounding_mode);
+          int i = mpfr_neg(first, first, mpfr_rounding_mode);
+          mpfr_subnormalize(first, i, mpfr_rounding_mode);
           data.f32 = mpfr_get_flt(first, MPFR_RNDD);
           mpfr_clears(first, NULL);
           break;
@@ -3445,10 +3475,13 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_div(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_div(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;
@@ -3468,10 +3501,13 @@ void div_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_div(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_div(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;
@@ -3522,9 +3558,12 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
-        mpfr_exp2(first, first, mpfr_rounding_mode);
+        int i = mpfr_exp2(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -3544,9 +3583,12 @@ void ex2_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
-        mpfr_exp2(first, first, mpfr_rounding_mode);
+        int i = mpfr_exp2(first, first, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, NULL);
         break;
@@ -4310,12 +4352,16 @@ void mad_def(const ptx_instruction *pI, ptx_thread_info *thread,
             break;
         }
         mpfr_t first, second, third;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, third, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
         mpfr_set_flt(third, c.f32, MPFR_RNDD);
-        mpfr_mul(first, first, second, mpfr_rounding_mode);
-        mpfr_add(first, first, third, mpfr_rounding_mode);
+        int i = mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
+        i = mpfr_add(first, first, third, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         if (pI->saturation_mode()) {
           if (mpfr_sgn(first) < 0)
             mpfr_set_flt(first, 0.0f, MPFR_RNDD);
@@ -4342,12 +4388,16 @@ void mad_def(const ptx_instruction *pI, ptx_thread_info *thread,
             break;
         }
         mpfr_t first, second, third;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, second, third, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
         mpfr_set_flt(third, c.f32, MPFR_RNDD);
-        mpfr_mul(first, first, second, mpfr_rounding_mode);
-        mpfr_add(first, first, third, mpfr_rounding_mode);
+        int i = mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
+        i = mpfr_add(first, first, third, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         if (pI->saturation_mode()) {
           if (mpfr_sgn(first) < 0)
             mpfr_set_flt(first, 0.0f, MPFR_RNDD);
@@ -4445,13 +4495,20 @@ void fmam_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second, third;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
-        mpfr_inits2(24, third, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
+        int i = mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
+
+        mpfr_set_emin(-148);
+        mpfr_set_emax(128);
+        mpfr_inits2(24, third, NULL);
         mpfr_set_flt(third, c.f32, MPFR_RNDD);
-        mpfr_mul(first, first, second, mpfr_rounding_mode);
-        mpfr_add(third, first, third, mpfr_rounding_mode);
+        i = mpfr_add(third, first, third, mpfr_rounding_mode);
+        mpfr_subnormalize(third, i, mpfr_rounding_mode);
         if (pI->saturation_mode()) {
           if (mpfr_sgn(third) < 0)
             mpfr_set_flt(third, 0.0f, MPFR_RNDD);
@@ -4506,6 +4563,8 @@ void max_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
     {
       mpfr_t first, second;
       mpfr_t* larger;
+      mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+      mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
       mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
       mpfr_set_flt(first, a.f32, MPFR_RNDD);
       mpfr_set_flt(second, b.f32, MPFR_RNDD);
@@ -4871,11 +4930,13 @@ void mul_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
-        mpfr_mul(first, first, second, mpfr_rounding_mode);
-        // printf("[afterdusk] mul_impl: bf16\n");
+        int i = mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
 
         if (pI->saturation_mode()) {
           if (mpfr_sgn(first) < 0)
@@ -4903,11 +4964,13 @@ void mul_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, second, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
-        mpfr_mul(first, first, second, mpfr_rounding_mode);
-        // printf("[afterdusk] mul_impl: bf16\n");
+        int i = mpfr_mul(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
 
         if (pI->saturation_mode()) {
           if (mpfr_sgn(first) < 0)
@@ -5715,6 +5778,8 @@ bool CmpOp(int type, ptx_reg_t a, ptx_reg_t b, unsigned cmpop, ptx_thread_info *
     case VF32_TYPE:
       {
         mpfr_t first, second;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
         mpfr_set_flt(first, a.f32, MPFR_RNDD);
         mpfr_set_flt(second, b.f32, MPFR_RNDD);
@@ -6521,10 +6586,13 @@ void sub_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
         mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_sub(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_sub(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;
@@ -6545,10 +6613,13 @@ void sub_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
             break;
         }
         mpfr_t first, second;
+        mpfr_set_emin(-132);
+        mpfr_set_emax(128);
         mpfr_inits2(9, first, second, NULL);
         mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
         mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
-        mpfr_sub(first, first, second, mpfr_rounding_mode);
+        int i = mpfr_sub(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
         data.f32 = mpfr_get_flt(first, MPFR_RNDD);
         mpfr_clears(first, second, NULL);
         break;

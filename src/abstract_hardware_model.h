@@ -323,7 +323,11 @@ class kernel_info_t {
   void print_parent_info();
   kernel_info_t *get_parent() { return m_parent_kernel; }
   void set_vf_significand(int significand);
+  void set_vf_exponent_min(int exponent_min);
+  void set_vf_exponent_max(int exponent_max);
   int get_vf_significand();
+  int get_vf_exponent_min();
+  int get_vf_exponent_max();
 
  private:
   kernel_info_t *m_parent_kernel;
@@ -345,6 +349,8 @@ class kernel_info_t {
   unsigned m_kernel_TB_latency;  // this used for any CPU-GPU kernel latency and
                                  // counted in the gpu_cycle
   int vf_significand;
+  int vf_exponent_min;
+  int vf_exponent_max;
 };
 
 class core_config {

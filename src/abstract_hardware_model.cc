@@ -918,8 +918,25 @@ void kernel_info_t::set_vf_significand(int significand) {
   vf_significand = significand;
 }
 
+void kernel_info_t::set_vf_exponent_min(int exponent_min) {
+  vf_exponent_min = exponent_min;
+}
+
+void kernel_info_t::set_vf_exponent_max(int exponent_max) {
+  vf_exponent_max = exponent_max;
+}
+
+
 int kernel_info_t::get_vf_significand() {
   return vf_significand;
+}
+
+int kernel_info_t::get_vf_exponent_min() {
+  return vf_exponent_min;
+}
+
+int kernel_info_t::get_vf_exponent_max() {
+  return vf_exponent_max;
 }
 
 simt_stack::simt_stack(unsigned wid, unsigned warpSize, class gpgpu_sim *gpu) {
