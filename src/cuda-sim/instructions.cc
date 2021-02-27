@@ -4503,7 +4503,21 @@ void max_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
       d.s64 = MY_MAX_I(a.s64, b.s64);
       break;
     case VF32_TYPE:
-      inst_not_implemented(pI);
+    {
+      mpfr_t first, second;
+      mpfr_t* larger;
+      mpfr_inits2(thread->get_kernel().get_vf_significand(), first, second, NULL);
+      mpfr_set_flt(first, a.f32, MPFR_RNDD);
+      mpfr_set_flt(second, b.f32, MPFR_RNDD);
+
+      larger = mpfr_nan_p(first) ?
+                &second : mpfr_nan_p(second) ?
+                  &first : mpfr_greater_p(first, second) ?
+                    &first : &second;
+      d.f32 = mpfr_get_flt(*larger, MPFR_RNDD);
+      mpfr_clears(first, second, NULL);
+      break;
+    }
     case BF16_TYPE:
       inst_not_implemented(pI);
     case F32_TYPE:
