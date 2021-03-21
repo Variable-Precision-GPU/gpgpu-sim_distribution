@@ -1186,8 +1186,6 @@ class int_unit : public pipelined_simd_unit {
         return false;
       case DP_OP:
         return false;
-      case VP_OP:
-        return false;
       default:
         break;
     }

@@ -831,7 +831,7 @@ void ptx_instruction::set_opcode_and_latency() {
         case VF32_TYPE:
           latency = vp_latency[0];
           initiation_interval = vp_init[0];
-          op = VP_OP;
+          op = SP_OP;
           break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
@@ -862,7 +862,7 @@ void ptx_instruction::set_opcode_and_latency() {
         case VF32_TYPE:
           latency = vp_latency[1];
           initiation_interval = vp_init[1];
-          op = VP_OP;
+          op = SP_OP;
           break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
@@ -892,7 +892,7 @@ void ptx_instruction::set_opcode_and_latency() {
         case VF32_TYPE:
           latency = vp_latency[2];
           initiation_interval = vp_init[2];
-          op = VP_OP;
+          op = SP_OP;
           break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
@@ -924,7 +924,7 @@ void ptx_instruction::set_opcode_and_latency() {
         case VF32_TYPE:
           latency = vp_latency[3];
           initiation_interval = vp_init[3];
-          op = VP_OP;
+          op = SP_OP;
           break;
         case BF16_TYPE: // TODO: Set latency for BF16?
         case F32_TYPE:
