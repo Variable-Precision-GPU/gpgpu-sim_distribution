@@ -271,6 +271,7 @@ void gpgpu_context::print_simulation_time() {
   const unsigned cycles_per_sec =
       (unsigned)(the_gpgpusim->g_the_gpu->gpu_tot_sim_cycle / difference);
   printf("gpgpu_simulation_rate = %u (cycle/sec)\n", cycles_per_sec);
+  printf("gpgpu_tot_sim_cycle = %u\n", (unsigned) the_gpgpusim->g_the_gpu->gpu_tot_sim_cycle);
   printf("gpgpu_silicon_slowdown = %ux\n",
          the_gpgpusim->g_the_gpu->shader_clock() * 1000 / cycles_per_sec);
   fflush(stdout);
