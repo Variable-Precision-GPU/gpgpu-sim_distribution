@@ -612,7 +612,7 @@ void ptx_instruction::set_mul_div_or_other_archop() {
         get_type() == FF64_TYPE || get_type() == BF16_TYPE || get_type() == VF32_TYPE) {
       switch (get_opcode()) {
         case MUL_OP:
-        case MAD_OP:
+        case MAD_OP || FMA_OP || FMAM_OP:
           sp_op = FP_MUL_OP;
           break;
         case DIV_OP:
@@ -919,6 +919,8 @@ void ptx_instruction::set_opcode_and_latency() {
     case MAD_OP:
     case MADC_OP:
     case MADP_OP:
+    case FMA_OP:
+    case FMAM_OP:
       // MAD latency
       switch (get_type()) {
         case VF32_TYPE:
