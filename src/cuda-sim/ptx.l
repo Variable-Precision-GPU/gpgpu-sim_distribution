@@ -62,6 +62,7 @@ int ptx_error( yyscan_t yyscanner, ptx_recognizer* recognizer, const char *s );
 
 abs	TC; yylval->int_value = ABS_OP; return OPCODE;
 add	TC; yylval->int_value = ADD_OP; return OPCODE;
+addm	TC; yylval->int_value = ADDM_OP; return OPCODE;
 addp	TC; yylval->int_value = ADDP_OP; return OPCODE;
 addc    TC; yylval->int_value = ADDC_OP; return OPCODE;
 and	TC; yylval->int_value = AND_OP; return OPCODE;

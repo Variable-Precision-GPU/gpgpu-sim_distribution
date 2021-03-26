@@ -397,7 +397,7 @@ scalar_type: S8_TYPE { recognizer->add_scalar_type_spec( S8_TYPE ); }
 	| U64_TYPE   { recognizer->add_scalar_type_spec( U64_TYPE ); }
 	| F16_TYPE   { recognizer->add_scalar_type_spec( F16_TYPE ); }
 	| BF16_TYPE   { recognizer->add_scalar_type_spec( BF16_TYPE ); }
-  | VF32_TYPE   { recognizer->add_scalar_type_spec( VF32_TYPE ); }
+	| VF32_TYPE   { recognizer->add_scalar_type_spec( VF32_TYPE ); }
 	| F32_TYPE   { recognizer->add_scalar_type_spec( F32_TYPE ); }
 	| F64_TYPE   { recognizer->add_scalar_type_spec( F64_TYPE ); }
 	| FF64_TYPE   { recognizer->add_scalar_type_spec( FF64_TYPE ); }

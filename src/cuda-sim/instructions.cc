@@ -1206,6 +1206,69 @@ void add_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   thread->set_operand_value(dst, data, i_type, thread, pI, overflow, carry);
 }
 
+void addm_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
+  ptx_reg_t src1_data, src2_data, data;
+  int overflow = 0;
+  int carry = 0;
+
+  const operand_info &dst =
+      pI->dst();  // get operand info of sources and destination
+  const operand_info &src1 =
+      pI->src1();  // use them to determine that they are of type 'register'
+  const operand_info &src2 = pI->src2();
+
+  unsigned i_type = pI->get_type();
+  src1_data = thread->get_operand_value(src1, dst, i_type, thread, 1);
+  src2_data = thread->get_operand_value(src2, dst, i_type, thread, 1);
+
+  unsigned rounding_mode = pI->rounding_mode();
+  int orig_rm = fegetround();
+  mpfr_rnd_t mpfr_rounding_mode;
+  switch (rounding_mode) {
+    case RN_OPTION:
+      mpfr_rounding_mode = MPFR_RNDN;
+      break;
+    case RZ_OPTION:
+      fesetround(FE_TOWARDZERO);
+      mpfr_rounding_mode = MPFR_RNDZ;
+      break;
+    default:
+      assert(0);
+      break;
+  }
+
+  // performs addition. Sets carry and overflow if needed.
+  switch (i_type) {
+    case VF32_TYPE:
+      {
+        mpfr_t first, second;
+        mpfr_set_emin(-148);
+        mpfr_set_emax(128);
+        mpfr_inits2(24, first, NULL);
+
+        mpfr_set_emin(thread->get_kernel().get_vf_exponent_min());
+        mpfr_set_emax(thread->get_kernel().get_vf_exponent_max());
+        mpfr_inits2(thread->get_kernel().get_vf_significand(), second, NULL);
+
+
+        mpfr_set_flt(first, src1_data.f32, MPFR_RNDD);
+        mpfr_set_flt(second, src2_data.f32, MPFR_RNDD);
+        int i = mpfr_add(first, first, second, mpfr_rounding_mode);
+        mpfr_subnormalize(first, i, mpfr_rounding_mode);
+        data.f32 = mpfr_get_flt(first, MPFR_RNDD);
+        mpfr_clears(first, second, NULL);
+        break;
+      }
+    default:
+      assert(0);
+      break;
+  }
+  fesetround(orig_rm);
+
+  thread->set_operand_value(dst, data, i_type, thread, pI, overflow, carry);
+}
+
+
 void addc_impl(const ptx_instruction *pI, ptx_thread_info *thread) {
   inst_not_implemented(pI);
 }
